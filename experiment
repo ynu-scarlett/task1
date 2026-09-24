@@ -1,0 +1,99 @@
+# -*- coding: utf-8 -*-
+"""
+复利计算器
+核心公式：A = P × (1 + r/n) ** (n × t)
+  A —— 最终本息和
+  P —— 本金
+  r —— 年利率（小数，如 5% 写作 0.05）
+  n —— 每年复利次数
+  t —— 存款年数
+运行方式：在本文件所在目录执行  python experiment
+"""
+
+
+def input_float(prompt, min_value=None, error_msg="输入无效，请重新输入数字！"):
+    """读取一个浮点数；非数字则重输，提供 min_value 时还会校验下限。"""
+    while True:
+        text = input(prompt).strip().replace("%", "")   # 去掉可能误输入的百分号
+        try:
+            value = float(text)                          # 尝试转为浮点数
+        except ValueError:
+            print("  ⚠ 输入无效，请输入数字！")
+            continue
+        if min_value is not None and value < min_value:  # 下限校验（如本金必须为正）
+            print(f"  ⚠ {error_msg}")
+            continue
+        return value
+
+
+def main():
+    print("=" * 46)
+    print("            复 利 计 算 器")
+    print("=" * 46)
+
+    # 1) 本金：必须大于 0
+    P = input_float("请输入本金（元）：", min_value=0.0,
+                    error_msg="本金必须大于 0！")
+    # 防止用户输入 0（float 可等于 0，无存款意义）
+    while P <= 0:
+        print("  ⚠ 本金必须大于 0！")
+        P = input_float("请输入本金（元）：", min_value=0.0)
+
+    # 2) 年利率：按百分数输入（5 表示 5%），不允许为负，再换算成小数 r
+    rate_percent = input_float("请输入年利率（%，如 5 表示 5%）：",
+                               min_value=0.0, error_msg="利率不能为负！")
+    r = rate_percent / 100
+
+    # 3) 存款年数：必须大于 0
+    t = input_float("请输入存款年数：", min_value=0.0,
+                    error_msg="年数必须大于 0！")
+    while t <= 0:
+        print("  ⚠ 年数必须大于 0！")
+        t = input_float("请输入存款年数：", min_value=0.0)
+
+    # 4) 复利频率：每年计息次数 n
+    freq_menu = {
+        "1": ("每年复利一次", 1),
+        "2": ("每半年复利一次", 2),
+        "3": ("每季度复利一次", 4),
+        "4": ("每月复利一次", 12),
+        "5": ("每日复利一次", 365),
+    }
+    print("\n请选择复利频率：")
+    for key, (name, _) in freq_menu.items():
+        print(f"  {key}. {name}")
+    while True:
+        choice = input("请输入选项（1-5，默认 1）：").strip() or "1"
+        if choice in freq_menu:
+            freq_name, n = freq_menu[choice]
+            break
+        print("  ⚠ 无效选项，请输入 1-5！")
+
+    # 5) 套公式计算：每期利率 r/n，总计息期数 n×t
+    A = P * (1 + r / n) ** (n * t)          # 最终本息和
+    interest = A - P                         # 总利息
+    ratio = interest / P * 100               # 利息占本金的百分比
+
+    # 6) 输出结果
+    print("\n" + "-" * 46)
+    print(f"本金：{P:,.2f} 元")
+    print(f"年利率：{rate_percent:g}%    复利频率：{freq_name}（每年 {n} 次）")
+    print(f"存期：{t:g} 年    总计息期数：{n * t:g} 期")
+    print("-" * 46)
+    print(f"★ 最终本息和：{A:,.2f} 元")
+    print(f"  其中利息：{interest:,.2f} 元（为 本 金 的 {ratio:.2f}%）")
+    print("-" * 46)
+
+    # 7) 整数年时附一张逐年明细表，直观看到“利滚利”
+    if float(t).is_integer():
+        print("\n逐年明细：")
+        print(f"  {'年末':>4} | {'本息余额(元)':>14} | {'当年利息(元)':>13}")
+        print("  " + "-" * 40)
+        for year in range(1, int(t) + 1):
+            balance = P * (1 + r / n) ** (n * year)      # 第 year 年末余额
+            prev = P if year == 1 else P * (1 + r / n) ** (n * (year - 1))
+            print(f"  第{year:>2}年 | {balance:>14,.2f} | {balance - prev:>13,.2f}")
+
+
+if __name__ == "__main__":
+    main()
